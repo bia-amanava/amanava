@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Download, Filter, ChevronDown, ChevronRight, Calendar, ArrowRightLeft, LayoutList, CalendarRange } from 'lucide-react';
+import { Download, Filter, ChevronDown, ChevronRight, Calendar, ArrowRightLeft, LayoutList, CalendarRange, ArrowRight, AlertCircle } from 'lucide-react';
+import { getCurrentUser } from '../services/authService';
+import { Link } from 'react-router-dom';
 
 export function DRE() {
+  const user = getCurrentUser();
+  const isMocked = user ? user.useMock : true;
+
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({
     'receita': true,
     'custos': true,
@@ -153,6 +158,30 @@ export function DRE() {
         </div>
       </div>
 
+      {!isMocked && (
+        <Card className="border-amanava-coral/20 bg-amanava-coral/5 mb-6">
+          <CardContent className="flex items-start md:items-center justify-between p-6 flex-col md:flex-row gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-amanava-coral/10 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5 text-amanava-coral" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-amanava-black">Nenhum dado estruturado</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  A DRE não pode ser montada porque não há dados no banco para este usuário. Por favor, importe planilhas no Setup Center.
+                </p>
+              </div>
+            </div>
+            <Link to="/setup" className="shrink-0">
+              <button className="bg-amanava-coral hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+                Ir para o Setup Center
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Date and Comparison Filters */}
       <div className="space-y-4">
         <Card className="bg-gray-50/50 border-dashed border-gray-200">
@@ -267,7 +296,7 @@ export function DRE() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {dreData.map(row => {
+                {(isMocked ? dreData : []).map(row => {
                   if (row.type === 'child' && !expandedRows[row.parent!]) return null;
 
                   const isHeader = row.type === 'header';
@@ -359,6 +388,13 @@ export function DRE() {
                     </tr>
                   );
                 })}
+                {!isMocked && (
+                  <tr>
+                    <td colSpan={viewMode === 'resumo' ? 5 : detailedMonths.length + 2} className="px-6 py-8 text-center text-gray-500">
+                      Nenhum dado importado para processar a DRE.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

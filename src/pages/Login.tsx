@@ -31,17 +31,6 @@ export default function Login() {
             src="/logo.png" 
             alt="Amanava Logo" 
             className="h-20 object-contain"
-            onError={(e) => {
-              // Fallback caso a imagem ainda não tenha sido enviada pro file explorer
-              const target = e.target as HTMLImageElement;
-              target.onerror = null;
-              target.style.display = 'none';
-              target.parentElement!.innerHTML = `
-                <div class="w-12 h-12 rounded-lg bg-amanava-green flex items-center justify-center">
-                  <span class="text-white font-bold text-3xl leading-none">a</span>
-                </div>
-              `;
-            }}
           />
         </div>
         <h1 className="text-amanava-black text-2xl font-bold text-center mb-1">

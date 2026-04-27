@@ -2,14 +2,20 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { mockTransactions } from '../data/mockData';
-import { AlertTriangle, CheckCircle, Search, Filter, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Search, Filter, X, ArrowRight, AlertCircle } from 'lucide-react';
+import { getCurrentUser } from '../services/authService';
+import { Link } from 'react-router-dom';
 
 export function CurationControl() {
+  const user = getCurrentUser();
+  const isMocked = user ? user.useMock : true;
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [filterColumn, setFilterColumn] = useState('id');
   const [appliedSearch, setAppliedSearch] = useState('');
 
-  const pendingTransactions = mockTransactions.filter(tx => {
+  const baseTransactions = isMocked ? mockTransactions : [];
+  const pendingTransactions = baseTransactions.filter(tx => {
     if (tx.status !== 'pending') return false;
     if (!appliedSearch) return true;
 
@@ -60,6 +66,30 @@ export function CurationControl() {
           </div>
         </div>
       </div>
+
+      {!isMocked && (
+        <Card className="border-amanava-coral/20 bg-amanava-coral/5 mb-6">
+          <CardContent className="flex items-start md:items-center justify-between p-6 flex-col md:flex-row gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-amanava-coral/10 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5 text-amanava-coral" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-amanava-black">Nenhum dado para curadoria</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Você precisa realizar a ingestão de dados para listar anomalias ou revisar a classificação da IA.
+                </p>
+              </div>
+            </div>
+            <Link to="/setup" className="shrink-0">
+              <button className="bg-amanava-coral hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+                Ir para o Setup Center
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="border-b border-gray-100 flex flex-row items-center justify-between py-4">
@@ -165,7 +195,7 @@ export function CurationControl() {
                   <tr>
                     <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                       <CheckCircle className="w-8 h-8 text-amanava-green mx-auto mb-2" />
-                      Nenhuma pendência encontrada. Dados 100% confiáveis.
+                      {isMocked ? 'Nenhuma pendência encontrada. Dados 100% confiáveis.' : 'Sem dados processados na base.'}
                     </td>
                   </tr>
                 )}

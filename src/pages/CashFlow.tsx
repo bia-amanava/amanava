@@ -1,10 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts';
-import { Download, Calendar, ArrowRightLeft, CalendarDays, TrendingDown, Clock } from 'lucide-react';
+import { Download, Calendar, ArrowRightLeft, CalendarDays, TrendingDown, Clock, ArrowRight, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { getCurrentUser } from '../services/authService';
+import { Link } from 'react-router-dom';
 
 export function CashFlow() {
+  const user = getCurrentUser();
+  const isMocked = user ? user.useMock : true;
+
   const [analysisType, setAnalysisType] = useState<'mensal' | 'semanal' | 'projecao'>('projecao');
   const [selectedMonth, setSelectedMonth] = useState('2026-05');
   const [selectedWeek, setSelectedWeek] = useState('1');
@@ -14,6 +19,10 @@ export function CashFlow() {
   const [defaultRate, setDefaultRate] = useState(5); // % de inadimplência
 
   const { data: projectedData, totalInflows, totalOutflows, finalBalance } = useMemo(() => {
+    if (!isMocked) {
+      return { data: [], totalInflows: 0, totalOutflows: 0, finalBalance: 0 };
+    }
+    
     let currentBal = 340500;
     let tIn = 0;
     let tOut = 0;
@@ -62,7 +71,7 @@ export function CashFlow() {
       totalOutflows: Math.round(tOut),
       finalBalance: Math.round(currentBal)
     };
-  }, [projectionDays, defaultRate, analysisType]);
+  }, [projectionDays, defaultRate, analysisType, isMocked]);
 
   const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 
@@ -79,6 +88,30 @@ export function CashFlow() {
            </Button>
         </div>
       </div>
+
+      {!isMocked && (
+        <Card className="border-amanava-coral/20 bg-amanava-coral/5 mb-6">
+          <CardContent className="flex items-start md:items-center justify-between p-6 flex-col md:flex-row gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-amanava-coral/10 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5 text-amanava-coral" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-amanava-black">Caixa Zerado</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Não existem movimentações para projetar o fluxo de caixa. Realize a importação dos arquivos base.
+                </p>
+              </div>
+            </div>
+            <Link to="/setup" className="shrink-0">
+              <button className="bg-amanava-coral hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+                Ir para o Setup Center
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="bg-gray-50/50 border-dashed border-gray-200">
         <CardContent className="p-4 flex flex-col lg:flex-row gap-6 items-end">
@@ -188,7 +221,7 @@ export function CashFlow() {
             <CardTitle className="text-sm font-medium text-gray-500">Saldo Atual (Caixa)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">R$ 340.500</div>
+            <div className="text-2xl font-bold text-gray-900">{isMocked ? 'R$ 340.500' : 'R$ 0'}</div>
             <p className="text-xs text-gray-500 mt-1">Status na conta real</p>
           </CardContent>
         </Card>

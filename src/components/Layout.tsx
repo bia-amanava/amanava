@@ -40,17 +40,6 @@ export function Layout() {
               src="/logo.png" 
               alt="Amanava" 
               className="w-8 h-8 object-contain"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.onerror = null;
-                target.style.display = 'none';
-                target.parentElement!.innerHTML = `
-                  <div class="w-8 h-8 rounded-md bg-amanava-green flex items-center justify-center">
-                    <span class="text-white font-bold text-xl leading-none">a</span>
-                  </div>
-                  <span class="font-bold text-xl tracking-tight text-amanava-black ml-2">Amanava</span>
-                `;
-              }}
             />
             <span className="font-bold text-xl tracking-tight text-amanava-black">Amanava</span>
           </div>
@@ -108,17 +97,6 @@ export function Layout() {
             src="/logo.png" 
             alt="Amanava" 
             className="w-8 h-8 object-contain"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.onerror = null;
-              target.style.display = 'none';
-              target.parentElement!.innerHTML = `
-                <div class="w-8 h-8 rounded-md bg-amanava-green flex items-center justify-center">
-                  <span class="text-white font-bold text-xl leading-none">a</span>
-                </div>
-                <span class="font-bold text-xl tracking-tight text-amanava-black ml-2">Amanava</span>
-              `;
-            }}
           />
           <span className="font-bold text-xl tracking-tight text-amanava-black ml-2">Amanava</span>
         </header>
