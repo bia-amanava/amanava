@@ -9,7 +9,7 @@ import {
   TrendingUp, 
   LogOut 
 } from 'lucide-react';
-import { mockLogout, getCurrentUser } from '../services/authService';
+import { logout, getCurrentUser } from '../services/authService';
 
 export function Layout() {
   const location = useLocation();
@@ -17,7 +17,7 @@ export function Layout() {
   const user = getCurrentUser();
 
   const handleLogout = () => {
-    mockLogout();
+    logout();
     navigate('/login');
   };
 

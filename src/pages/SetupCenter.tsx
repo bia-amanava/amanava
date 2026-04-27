@@ -1,9 +1,72 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Database, FileSpreadsheet, Key, Upload, CheckCircle2 } from 'lucide-react';
+import { Database, FileSpreadsheet, Key, Upload, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { uploadFile } from '../services/uploadService';
 
 export function SetupCenter() {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadResult, setUploadResult] = useState<any>(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+      setUploadStatus('idle');
+      setUploadResult(null);
+      setErrorMessage('');
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setSelectedFile(e.dataTransfer.files[0]);
+      setUploadStatus('idle');
+      setUploadResult(null);
+      setErrorMessage('');
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleImportClick = async () => {
+    if (!selectedFile) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    setUploadStatus('uploading');
+    setErrorMessage('');
+    
+    try {
+      const userStr = localStorage.getItem("amanava_user");
+      let tenantId = 'tenant-demo';
+      let userEmail = 'ricardo@amanava.com';
+      
+      if (userStr) {
+        try {
+          const userObj = JSON.parse(userStr);
+          if (userObj.email) userEmail = userObj.email;
+          if (userObj.tenant_id) tenantId = userObj.tenant_id;
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      const result = await uploadFile(selectedFile, tenantId, userEmail);
+      setUploadResult(result);
+      setUploadStatus('success');
+    } catch (error: any) {
+      setErrorMessage(error.message || 'Erro ao fazer upload');
+      setUploadStatus('error');
+    }
+  };
   return (
     <div className="space-y-6">
       <div>
@@ -53,12 +116,92 @@ export function SetupCenter() {
             <p className="text-sm text-gray-500">
               Importação manual de dados complementares ou correções em lote.
             </p>
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors">
-              <Upload className="w-6 h-6 text-gray-400 mb-2" />
-              <p className="text-sm font-medium text-amanava-black">Arraste arquivos ou clique</p>
-              <p className="text-xs text-gray-500 mt-1">.xlsx, .csv até 10MB</p>
-            </div>
-            <Button className="w-full">Importar Arquivo</Button>
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept=".xlsx, .xls, .csv" 
+              className="hidden" 
+            />
+
+            {uploadStatus === 'success' && uploadResult ? (
+              <div className="bg-amanava-green/10 border border-amanava-green/20 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="w-5 h-5 text-amanava-green" />
+                  <span className="font-medium text-amanava-green">{uploadResult.message}</span>
+                </div>
+                <div className="text-xs text-gray-600 space-y-1 mt-2">
+                  <p><strong>Arquivo:</strong> {uploadResult.file_name}</p>
+                  <p><strong>Upload ID:</strong> {uploadResult.upload_id}</p>
+                  {uploadResult.detected_sheets && uploadResult.detected_sheets.length > 0 && (
+                    <p><strong>Abas detectadas:</strong> {uploadResult.detected_sheets.join(', ')}</p>
+                  )}
+                  {uploadResult.inserted_counts && Object.keys(uploadResult.inserted_counts).length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-amanava-green/20">
+                      <strong>Registros inseridos:</strong>
+                      <ul className="grid grid-cols-2 gap-1 mt-1">
+                        {Object.entries(uploadResult.inserted_counts).map(([table, count]) => (
+                          <li key={table} className="text-gray-600">• {table}: {count as number}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-4"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setUploadStatus('idle');
+                    setUploadResult(null);
+                  }}
+                >
+                  Fazer novo upload
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
+                    uploadStatus === 'error' ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                >
+                  <Upload className={`w-6 h-6 mb-2 ${uploadStatus === 'error' ? 'text-red-400' : 'text-gray-400'}`} />
+                  <p className="text-sm font-medium text-amanava-black">
+                    {selectedFile ? selectedFile.name : 'Arraste arquivos ou clique'}
+                  </p>
+                  {!selectedFile && <p className="text-xs text-gray-500 mt-1">.xlsx, .xls, .csv até 10MB</p>}
+                </div>
+
+                {uploadStatus === 'error' && (
+                  <div className="flex items-center gap-2 text-red-500 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
+                <Button 
+                  className="w-full" 
+                  onClick={handleImportClick}
+                  disabled={uploadStatus === 'uploading'}
+                >
+                  {uploadStatus === 'uploading' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Importando...
+                    </>
+                  ) : selectedFile ? (
+                    'Confirmar Importação'
+                  ) : (
+                    'Importar Arquivo'
+                  )}
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
 

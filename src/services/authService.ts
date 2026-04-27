@@ -1,32 +1,30 @@
-// src/services/authService.js
+// src/services/authService.ts
 
-import { mockUsers } from "../data/mockData"
+export async function login(email: string, password: string) {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-export function mockLogin(email: string, password: string) {
-  const user = mockUsers.find(
-    (u) => u.email === email && u.password === password
-  )
+    const data = await response.json();
 
-  if (user) {
-    // Simula um JWT falso
-    const fakeToken = btoa(JSON.stringify({
-      id: user.id,
-      tenant_id: user.tenant_id,
-      name: user.name,
-      role: user.role
-    }))
-
-    // Salva no localStorage (simula sessão)
-    localStorage.setItem("amanava_token", fakeToken)
-    localStorage.setItem("amanava_user", JSON.stringify(user))
-
-    return { success: true, user }
+    if (response.ok) {
+      localStorage.setItem("amanava_token", data.token);
+      localStorage.setItem("amanava_user", JSON.stringify(data.user));
+      return { success: true, user: data.user };
+    } else {
+      return { success: false, error: data.error || "Email ou senha incorretos" };
+    }
+  } catch (error) {
+    return { success: false, error: "Erro ao conectar ao servidor" };
   }
-
-  return { success: false, error: "Email ou senha incorretos" }
 }
 
-export function mockLogout() {
+export function logout() {
   localStorage.removeItem("amanava_token")
   localStorage.removeItem("amanava_user")
 }

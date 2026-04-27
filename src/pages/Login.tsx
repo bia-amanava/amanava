@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { mockLogin } from "../services/authService"
+import { login } from "../services/authService"
 
 export default function Login() {
   const [email, setEmail] = useState("")
@@ -10,9 +10,9 @@ export default function Login() {
   const [error, setError] = useState("")
   const navigate = useNavigate()
 
-  function handleSubmit(e) {
+  async function handleSubmit(e: any) {
     e.preventDefault()
-    const result = mockLogin(email, password)
+    const result = await login(email, password)
 
     if (result.success) {
       navigate("/") // Redireciona pro Dashboard
